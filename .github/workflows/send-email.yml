@@ -33,7 +33,7 @@ jobs:
       env:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
-  continue-on-error: true  # This will allow the workflow to continue even if this step fails.
+
     - name: Clean up
       run: |
         rm -rf ./publish  # Remove published files
