@@ -11,7 +11,8 @@ public class AiMessageService
 
     public AiMessageService(IConfiguration config)
     {
-        _apiKey = config["OpenAI:ApiKey"];
+        // Use environment variable for API Key (GitHub secret)
+        _apiKey = Environment.GetEnvironmentVariable("OPENAI_API_KEY") ?? config["OpenAI:ApiKey"];
         _httpClient = new HttpClient();
         _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
     }
@@ -21,8 +22,7 @@ public class AiMessageService
         var payload = new
         {
             model = "gpt-3.5-turbo",
-            messages = new[]
-            {
+            messages = new[] {
                 new { role = "user", content = "Write a short inspirational message for today." }
             }
         };
