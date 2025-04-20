@@ -2,7 +2,7 @@ public async Task<string> GetDailyMessageAsync()
 {
     var payload = new
     {
-        model = "gpt-3.5-turbo",
+        model = "gpt-3.5-turbo-1106", // Cheapest & stable as of now
         messages = new[] {
             new { role = "user", content = "Write a short inspirational message for today." }
         }
@@ -26,7 +26,7 @@ public async Task<string> GetDailyMessageAsync()
         using var doc = System.Text.Json.JsonDocument.Parse(result);
         if (doc.RootElement.TryGetProperty("choices", out var choices) && choices.GetArrayLength() > 0)
         {
-            return choices[0].GetProperty("message").GetProperty("content").GetString() 
+            return choices[0].GetProperty("message").GetProperty("content").GetString()
                    ?? "No content received.";
         }
         else
