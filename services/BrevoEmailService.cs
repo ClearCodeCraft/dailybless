@@ -12,9 +12,12 @@ public class BrevoEmailService
 
     public BrevoEmailService(IConfiguration config)
     {
+        // Use environment variable for API Key (GitHub secret)
+        var apiKey = Environment.GetEnvironmentVariable("BREVO_API_KEY") ?? config["Brevo:ApiKey"];
+
         _settings = config.GetSection("Brevo").Get<BrevoSettings>();
         _httpClient = new HttpClient();
-        _httpClient.DefaultRequestHeaders.Add("api-key", _settings.ApiKey);
+        _httpClient.DefaultRequestHeaders.Add("api-key", apiKey); // Use the API key from the environment variable
         _httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
     }
 
