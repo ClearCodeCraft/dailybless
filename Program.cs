@@ -1,59 +1,53 @@
-using System.Net.Http;
 using System.Net.Http.Headers;
-using SendGrid;
-using SendGrid.Helpers.Mail;
-using System.Text.Json;
 using System.Text;
+using Microsoft.Extensions.Configuration;
+using System.Text.Json;
 
-class Program
+// Load configuration
+var builder = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.json");
+var config = builder.Build();
+
+// 1. Generate email content from ChatGPT
+var openAiClient = new HttpClient();
+openAiClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", config["OpenAI:ApiKey"]);
+
+var chatRequest = new
 {
-    static async Task Main(string[] args)
+    model = "gpt-3.5-turbo",
+    messages = new[]
     {
-        var openAiApiKey = Environment.GetEnvironmentVariable("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");
-        var sendGridApiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY");
-        var fromEmail = "your_verified_email@domain.com";
-        var toEmail = "recipient@domain.com";
-
-        var chatGptMessage = await GetChatGptMessage(openAiApiKey);
-        await SendEmail(chatGptMessage, sendGridApiKey, fromEmail, toEmail);
+        new { role = "system", content = "You are an assistant that writes status update emails." },
+        new { role = "user", content = "Write a brief daily status update email for a developer." }
     }
+};
 
-    static async Task<string> GetChatGptMessage(string apiKey)
-    {
-        using var client = new HttpClient();
-        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiKey);
+var chatJson = JsonSerializer.Serialize(chatRequest);
+var chatContent = new StringContent(chatJson, Encoding.UTF8, "application/json");
 
-        var requestBody = new
-        {
-            model = "gpt-3.5-turbo",
-            messages = new[]
-            {
-                new { role = "user", content = "Write me a short motivational email for the team." }
-            },
-            temperature = 0.8
-        };
+var chatResponse = await openAiClient.PostAsync("https://api.openai.com/v1/chat/completions", chatContent);
+var chatResponseJson = await chatResponse.Content.ReadAsStringAsync();
+using var doc = JsonDocument.Parse(chatResponseJson);
+var messageContent = doc.RootElement
+    .GetProperty("choices")[0]
+    .GetProperty("message")
+    .GetProperty("content")
+    .GetString();
 
-        var response = await client.PostAsync(
-            "https://api.openai.com/v1/chat/completions",
-            new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json")
-        );
+// 2. Send the generated message via Brevo
+var brevoClient = new HttpClient();
+brevoClient.DefaultRequestHeaders.Add("api-key", config["Brevo:ApiKey"]);
 
-        var result = JsonSerializer.Deserialize<JsonElement>(await response.Content.ReadAsStringAsync());
-        return result.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString();
-    }
+var brevoEmail = new
+{
+    sender = new { name = config["Brevo:SenderName"], email = config["Brevo:SenderEmail"] },
+    to = new[] { new { email = config["Brevo:RecipientEmail"] } },
+    subject = "Your Daily Update 📬",
+    htmlContent = $"<p>{messageContent?.Replace("\n", "<br>")}</p>"
+};
 
-    static async Task SendEmail(string body, string apiKey, string from, string to)
-    {
-        var client = new SendGridClient(apiKey);
-        var msg = MailHelper.CreateSingleEmail(
-            new EmailAddress(from, "LLR AI Bot"),
-            new EmailAddress(to),
-            "🤖 Your Daily AI Email",
-            body,
-            $"<strong>{body}</strong>"
-        );
+var brevoJson = JsonSerializer.Serialize(brevoEmail);
+var brevoContent = new StringContent(brevoJson, Encoding.UTF8, "application/json");
 
-        var response = await client.SendEmailAsync(msg);
-        Console.WriteLine($"Email sent: {response.StatusCode}");
-    }
-}
+var brevoResponse = await brevoClient.PostAsync("https://api.brevo.com/v3/smtp/email", brevoContent);
+Console.WriteLine(await brevoResponse.Content.ReadAsStringAsync());
