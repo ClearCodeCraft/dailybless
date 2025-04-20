@@ -1,31 +1,39 @@
-name: Daily AI Email Sender
+name: Send Daily Blessing Email
 
 on:
   schedule:
-    - cron: "0 9 * * *"  # Runs every day at 9 AM UTC
-  workflow_dispatch:      # Optional: allow manual trigger
+    - cron: '0 9 * * *'  # Runs daily at 9 AM UTC
+  workflow_dispatch:  # Allows you to manually trigger the workflow if needed
 
 jobs:
   send-email:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Checkout the repository
+      uses: actions/checkout@v2
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: '8.0.x'
+    - name: Set up .NET Core
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '6.x'  # Set the version of .NET you're using
 
-      - name: Restore dependencies
-        run: dotnet restore
+    - name: Restore dependencies
+      run: dotnet restore
 
-      - name: Build project
-        run: dotnet build --no-restore
+    - name: Build the project
+      run: dotnet build --configuration Release
 
-      - name: Run app
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
-        run: dotnet run --project YourProjectFolder
+    - name: Publish the project
+      run: dotnet publish --configuration Release --output ./publish
+
+    - name: Run the application to send the email
+      run: |
+        dotnet ./publish/DailyBlessingConsole.dll
+      env:
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
+
+    - name: Clean up
+      run: |
+        rm -rf ./publish  # Remove published files
