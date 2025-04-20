@@ -1,10 +1,14 @@
 using DailyBlessingConsole.Services;
 using Microsoft.Extensions.Configuration;
+using System;
 
 var config = new ConfigurationBuilder()
-    .AddJsonFile("appsettings.json", optional: false)
+    .SetBasePath(Directory.GetCurrentDirectory())  // Set the base path for configuration
+    .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)  // Add appsettings.json for local dev
+    .AddEnvironmentVariables()  // Add environment variables (for GitHub Actions secrets)
     .Build();
 
+// Read environment variables from GitHub Actions secrets
 var ai = new AiMessageService(config);
 var brevo = new BrevoEmailService(config);
 
