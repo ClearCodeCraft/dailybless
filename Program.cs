@@ -1,15 +1,17 @@
+using DailyBlessingConsole.Services;
 using Microsoft.Extensions.Configuration;
 
 var config = new ConfigurationBuilder()
-    .AddJsonFile("appsettings.json")
+    .AddJsonFile("appsettings.json", optional: false)
     .Build();
 
-var emailService = new EmailService(config);
+var ai = new AiMessageService(config);
+var brevo = new BrevoEmailService(config);
 
-// 🧠 Replace with ChatGPT call if needed:
-string message = "🌞 Good morning! Here's your daily reminder to stay kind, stay focused, and keep believing! 💪";
+Console.WriteLine("✨ Generating message...");
+var message = await ai.GetDailyMessageAsync();
+Console.WriteLine("✅ Message generated:\n" + message);
 
-// Send email
-await emailService.SendDailyEmailAsync(message);
-
-Console.WriteLine("✅ Email sent.");
+Console.WriteLine("📧 Sending emails...");
+await brevo.SendBatchEmailAsync(message);
+Console.WriteLine("✅ All emails sent.");
