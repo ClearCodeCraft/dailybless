@@ -19,13 +19,13 @@ jobs:
         dotnet-version: '7.x'  # Set the version of .NET you're using
 
     - name: Restore dependencies
-      run: dotnet restore
+      run: dotnet restore ./ClearCodeCraft/dailybless/DailyBlessingConsole.csproj  # Adjust path to your .csproj file
 
     - name: Build the project
-      run: dotnet build --configuration Release
+      run: dotnet build --configuration Release --source ./ClearCodeCraft/dailybless/DailyBlessingConsole.csproj  # Adjust path to your .csproj file
 
     - name: Publish the project
-      run: dotnet publish --configuration Release --output ./publish
+      run: dotnet publish --configuration Release --output ./publish --source ./ClearCodeCraft/dailybless/DailyBlessingConsole.csproj  # Adjust path to your .csproj file
 
     - name: Run the application to send the email
       run: |
