@@ -13,10 +13,10 @@ jobs:
     - name: Checkout the repository
       uses: actions/checkout@v2
 
-    - name: Set up .NET 8
+    - name: Set up .NET 7
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '8.x'  # Set the version of .NET you're using
+        dotnet-version: '7.x'  # Set the version of .NET you're using
 
     - name: Restore dependencies
       run: dotnet restore ./DailyBlessingConsole.csproj
