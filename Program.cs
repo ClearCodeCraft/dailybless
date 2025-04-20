@@ -40,11 +40,19 @@ brevoClient.DefaultRequestHeaders.Add("api-key", config["Brevo:ApiKey"]);
 
 var brevoEmail = new
 {
-    sender = new { name = config["Brevo:SenderName"], email = config["Brevo:SenderEmail"] },
-    to = new[] { new { email = config["Brevo:RecipientEmail"] } },
+    sender = new 
+    { 
+        name = "Soda City Web Design", 
+        email = "contact@sodacitywebdesign.com" 
+    },
+    to = new[] 
+    { 
+        new { email = "bikamokt@gmail.com" } 
+    },
     subject = "Your Daily Update 📬",
     htmlContent = $"<p>{messageContent?.Replace("\n", "<br>")}</p>"
 };
+
 
 var brevoJson = JsonSerializer.Serialize(brevoEmail);
 var brevoContent = new StringContent(brevoJson, Encoding.UTF8, "application/json");
